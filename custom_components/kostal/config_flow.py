@@ -27,9 +27,9 @@ from .const import DOMAIN, DEFAULT_NAME, SENSOR_TYPES  # pylint:disable=unused-i
 SUPPORTED_SENSOR_TYPES = list(SENSOR_TYPES)
 
 DEFAULT_MONITORED_CONDITIONS = [
-    "current power",
-    "total energy",
-    "daily energy",
+    "current_power",
+    "total_energy",
+    "daily_energy",
     "status",
 ]
 
