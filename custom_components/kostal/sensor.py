@@ -23,25 +23,23 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
-    """Add an Kostal piko entry."""
-    # Add the needed sensors to hass
-    piko = Piko(
-        entry.data[CONF_HOST], entry.data[CONF_USERNAME], entry.data[CONF_PASSWORD]
-    )
-    data = PikoData(piko, hass)
-
-    entities = []
-
-    for sensor in entry.data[CONF_MONITORED_CONDITIONS]:
-        entities.append(PikoInverter(data, sensor, entry.title))
-    async_add_entities(entities)
-
+     """Add an Kostal piko entry."""
+     # Add the needed sensors to hass
+     piko = Piko(entry.data[CONF_HOST], entry.data[CONF_USERNAME], entry.data[CONF_PASSWORD])
+     data = PikoData(piko, hass)
+     await data.async_update()
+     entities = []
+     for sensor in entry.data[CONF_MONITORED_CONDITIONS]:
+         entities.append(PikoInverter(data, sensor, entry.title))
+     async_add_entities(entities)
 
 class PikoInverter(Entity):
     """Representation of a Piko inverter."""
 
     def __init__(self, piko_data, sensor_type, name):
         """Initialize the sensor."""
+        self.serial_number = None
+        self.model = None
         self._sensor = SENSOR_TYPES[sensor_type][0]
         self._name = name
         self.type = sensor_type
@@ -51,7 +49,9 @@ class PikoInverter(Entity):
         self._icon = SENSOR_TYPES[self.type][2]
         self.serial_number = None
         self.model = None
-        self.update()
+        # self._device_class = SENSOR_TYPES[self.type][4]
+        self._state_class = {"state_class": SENSOR_TYPES[self.type][3],"device_class":SENSOR_TYPES[self.type][4]}
+        #self.update()
 
     @property
     def name(self):
@@ -88,13 +88,19 @@ class PikoInverter(Entity):
             "model": self.model,
         }
 
-    def update(self):
+    @property
+    def state_attributes(self):
+        """Return device specific state attributes."""
+        return self._state_class
+
+    async def async_update(self):
         """Update data."""
-        self.piko.update()
+        await self.piko.async_update()
         data = self.piko.data
         ba_data = self.piko.ba_data
-        self.serial_number = self.piko.info[0]
-        self.model = self.piko.info[1]
+        if self.piko.info is not None:
+            self.serial_number = self.piko.info[0]
+            self.model = self.piko.info[1]
         if ba_data is not None:
             if self.type == "solar_generator_power":
                 if len(ba_data) > 1:
@@ -226,26 +232,26 @@ class PikoInverter(Entity):
 class PikoData(Entity):
     """Representation of a Piko inverter."""
 
-    def __init__(self, piko, hass):
+    def __init__(self,  piko, hass):
         """Initialize the data object."""
         self.piko = piko
         self.hass = hass
         self.data = []
         self.ba_data = []
         self.info = None
-        self.info_update()
+        self.async_info_update()
 
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
-    def update(self):
+    async def async_update(self):
         """Update inverter data."""
         # pylint: disable=protected-access
-        self.data = self.piko._get_raw_content()
-        self.ba_data = self.piko._get_content_of_own_consumption()
+        self.data = await self.hass.async_add_executor_job(self.piko._get_raw_content)
+        self.ba_data = await self.hass.async_add_executor_job(self.piko._get_content_of_own_consumption)
         _LOGGER.debug(self.data)
         _LOGGER.debug(self.ba_data)
 
-    def info_update(self):
+    async def async_info_update(self):
         """Update inverter info."""
         # pylint: disable=protected-access
-        self.info = self.piko._get_info()
+        self.info = await self.hass.async_add_executor_job(self.piko._get_info)
         _LOGGER.debug(self.info)
