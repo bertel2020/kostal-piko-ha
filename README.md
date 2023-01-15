@@ -8,12 +8,12 @@ http://pvserver:<YOUR_PASSWORD>@<YOUR_INVERTER_IP>/index.fhtml
 ```
 Otherwise it will not work
 
-This custom_component has config flow and async support and adds your inverter as a device in Home-Assistant.
-Entities are configured to record long-term-data, which is why you can use them in your energy dashboard, too.
+This custom_component has config flow (Configuration from GUI) and async support and adds your inverter as a device in Home-Assistant.
+Entities are configured to record long-term-data, therefore they can be used in your energy dashboard, too.
 
-After install use "Kostal" in the integrations page for setup. Please deleted old configuration from your configuration.yaml before. 
+Search "Kostal" in the integrations page for setup. Please deleted old configuration from your configuration.yaml before. 
 
-## Available options
+## Available options in GUI
 ```
 current_power, total_energy, daily_energy, status
 
