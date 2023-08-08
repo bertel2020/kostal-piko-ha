@@ -50,7 +50,8 @@ class PikoInverter(Entity):
         self.serial_number = None
         self.model = None
         # self._device_class = SENSOR_TYPES[self.type][4]
-        self._state_class = {"state_class": SENSOR_TYPES[self.type][3],"device_class":SENSOR_TYPES[self.type][4]}
+        if self._unit_of_measurement is not None:
+            self._state_class = {"state_class": SENSOR_TYPES[self.type][3],"device_class":SENSOR_TYPES[self.type][4]}
         #self.update()
 
     @property
@@ -91,7 +92,8 @@ class PikoInverter(Entity):
     @property
     def state_attributes(self):
         """Return device specific state attributes."""
-        return self._state_class
+        if self._unit_of_measurement is not None:
+            return self._state_class
 
     async def async_update(self):
         """Update data."""
